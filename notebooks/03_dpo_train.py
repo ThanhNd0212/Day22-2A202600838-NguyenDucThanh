@@ -66,6 +66,16 @@ import torch
 
 assert torch.cuda.is_available(), "DPO needs a CUDA GPU. See HARDWARE-GUIDE.md."
 
+# T4 (compute 7.5) + Qwen2.5 GQA creates BMGHK attention tensors that
+# xformers backward does not support. Disable xformers so Unsloth falls
+# back to PyTorch's native SDPA, which works on all compute capabilities.
+try:
+    import unsloth.utils.attention_dispatch as _attn
+    _attn.HAS_XFORMERS = False
+    print("xformers disabled — using PyTorch SDPA (required for T4 + Qwen2.5 GQA)")
+except Exception as _e:
+    print(f"Could not patch xformers: {_e}")
+
 # %% [markdown]
 # ## 1. Load policy + reference (the VRAM story)
 #
