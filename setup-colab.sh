@@ -42,6 +42,12 @@ esac
 # ── 2. Install deps ─────────────────────────────────────────────────────
 # Colab pre-installs torch + transformers; let pip resolve compatible versions.
 # Unsloth's installer picks the right CUDA wheel.
+
+# torchcodec (pulled by newer sentence_transformers) fails to load FFmpeg .so
+# files in the Colab environment, which breaks unsloth import. Remove it before
+# installing the lab stack.
+pip uninstall -q -y torchcodec 2>/dev/null || true
+
 pip install -q -r requirements.txt
 
 if [ "$TIER" = "BIGGPU" ]; then
