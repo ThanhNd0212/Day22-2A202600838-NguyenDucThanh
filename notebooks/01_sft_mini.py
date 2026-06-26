@@ -131,18 +131,25 @@ print(f"\nFirst row:\n{ds[0]}")
 # Alpaca → ChatML format (Qwen2.5's native template)
 def format_alpaca_to_chat(row):
     messages = []
-    if row.get("instruction"):
-        prompt = row["instruction"]
-        if row.get("input"):
-            prompt += "\n\n" + row["input"]
+    instruction = (row.get("instruction") or "").strip()
+    output = (row.get("output") or "").strip()
+    if instruction:
+        prompt = instruction
+        inp = (row.get("input") or "").strip()
+        if inp:
+            prompt += "\n\n" + inp
         messages.append({"role": "user", "content": prompt})
-    if row.get("output"):
-        messages.append({"role": "assistant", "content": row["output"]})
+    if output:
+        messages.append({"role": "assistant", "content": output})
+    if not messages:
+        return {"text": ""}
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
     return {"text": text}
 
 
 ds_formatted = ds.map(format_alpaca_to_chat, remove_columns=ds.column_names)
+ds_formatted = ds_formatted.filter(lambda x: len(x["text"]) > 0)
+print(f"After filter: {len(ds_formatted)} rows")
 print(f"\nSample formatted text (first 500 chars):\n{ds_formatted[0]['text'][:500]}")
 
 # %% [markdown]
