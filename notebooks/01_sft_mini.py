@@ -85,6 +85,17 @@ if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
     print("Set tokenizer.pad_token = eos_token")
 
+# Some saved adapters (e.g. from Lab 21) strip the chat_template field.
+# Restore the standard Qwen2.5 ChatML template if missing.
+if not getattr(tokenizer, "chat_template", None):
+    tokenizer.chat_template = (
+        "{% for message in messages %}"
+        "{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+    )
+    print("Restored Qwen2.5 ChatML chat_template (was missing)")
+
 # %%
 model = FastLanguageModel.get_peft_model(
     model,
