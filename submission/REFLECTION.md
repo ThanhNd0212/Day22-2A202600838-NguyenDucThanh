@@ -14,7 +14,7 @@
 | GPU | Free Colab T4 16 GB |
 | CUDA / driver | CUDA 12.1, driver 535 |
 | Base model | `unsloth/Qwen2.5-3B-bnb-4bit` |
-| SFT dataset slice | `5CD-AI/Vietnamese-alpaca-cleaned` · 1000 samples · 1 epoch |
+| SFT dataset slice | `5CD-AI/Vietnamese-alpaca-gpt4-gg-translated` · 1000 samples · 1 epoch |
 | Preference dataset slice | `argilla/ultrafeedback-binarized-preferences-cleaned` · 2000 pairs · 1 epoch |
 | `COMPUTE_TIER` env | T4 |
 | Total cost | $0 (free Colab) |
