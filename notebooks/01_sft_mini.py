@@ -125,18 +125,35 @@ from datasets import load_dataset
 
 ds = load_dataset(SFT_DATASET, split=f"train[:{SFT_SLICE}]")
 print(f"Loaded {len(ds)} rows. Columns: {ds.column_names}")
-print(f"\nFirst row:\n{ds[0]}")
+print(f"\nFirst row keys/values:")
+row0 = ds[0]
+for k, v in row0.items():
+    print(f"  {k!r}: {str(v)[:120]}")
 
 # %%
-# Alpaca → ChatML format (Qwen2.5's native template)
+# Alpaca → ChatML format (Qwen2.5's native template).
+# Auto-detects column layout so the notebook works with multiple VN Alpaca variants.
+cols = ds.column_names
+
 def format_alpaca_to_chat(row):
-    messages = []
+    # Layout 1: pre-formatted text column (use directly, no template needed)
+    if "text" in cols and "instruction" not in cols:
+        text = (row.get("text") or "").strip()
+        return {"text": text}
+
+    # Layout 2: instruction / output (standard Alpaca format)
     instruction = (row.get("instruction") or "").strip()
     output = (row.get("output") or "").strip()
+    # Layout 3: input / output (no separate instruction key)
+    if not instruction:
+        instruction = (row.get("input") or "").strip()
+
+    messages = []
     if instruction:
         prompt = instruction
         inp = (row.get("input") or "").strip()
-        if inp:
+        # Avoid duplicating if input == instruction
+        if inp and inp != instruction:
             prompt += "\n\n" + inp
         messages.append({"role": "user", "content": prompt})
     if output:
@@ -150,6 +167,7 @@ def format_alpaca_to_chat(row):
 ds_formatted = ds.map(format_alpaca_to_chat, remove_columns=ds.column_names)
 ds_formatted = ds_formatted.filter(lambda x: len(x["text"]) > 0)
 print(f"After filter: {len(ds_formatted)} rows")
+assert len(ds_formatted) > 0, f"All rows empty — check column names above: {cols}"
 print(f"\nSample formatted text (first 500 chars):\n{ds_formatted[0]['text'][:500]}")
 
 # %% [markdown]
