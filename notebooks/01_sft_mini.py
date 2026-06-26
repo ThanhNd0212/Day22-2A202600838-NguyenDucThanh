@@ -136,23 +136,28 @@ for k, v in row0.items():
 cols = ds.column_names
 
 def format_alpaca_to_chat(row):
-    # Layout 1: pre-formatted text column (use directly, no template needed)
-    if "text" in cols and "instruction" not in cols:
-        text = (row.get("text") or "").strip()
-        return {"text": text}
+    # Resolve column names: prefer _vi suffix, fall back to plain name, then _en
+    def get_field(base):
+        for key in (f"{base}_vi", base, f"{base}_en"):
+            if key in cols:
+                return (row.get(key) or "").strip()
+        return ""
 
-    # Layout 2: instruction / output (standard Alpaca format)
-    instruction = (row.get("instruction") or "").strip()
-    output = (row.get("output") or "").strip()
-    # Layout 3: input / output (no separate instruction key)
+    # Layout 1: pre-formatted text column (use directly, no template needed)
+    if "text" in cols and "instruction" not in cols and "instruction_vi" not in cols:
+        return {"text": (row.get("text") or "").strip()}
+
+    instruction = get_field("instruction")
+    output = get_field("output")
+    inp = get_field("input")
+    # Avoid using input as instruction if it duplicates
     if not instruction:
-        instruction = (row.get("input") or "").strip()
+        instruction = inp
+        inp = ""
 
     messages = []
     if instruction:
         prompt = instruction
-        inp = (row.get("input") or "").strip()
-        # Avoid duplicating if input == instruction
         if inp and inp != instruction:
             prompt += "\n\n" + inp
         messages.append({"role": "user", "content": prompt})
